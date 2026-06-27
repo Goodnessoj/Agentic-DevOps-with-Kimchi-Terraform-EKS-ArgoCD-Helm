@@ -1,0 +1,353 @@
+{
+  "id": "019f093a-f5b8-7057-96e5-8bc4c984627f",
+  "name": "Epic E-2 VPC Networking",
+  "description": "Implement Epic E-2: Networking (VPC) for the petclinic-platform infrastructure repo. Build a reusable Terraform VPC module with all-public subnets, Internet Gateway, route tables, required EKS subnet tags, and baseline security groups. Wire the module into the dev and prod environment root modules using the CIDRs and AZs defined in docs/technical-spec.md.",
+  "status": "complete",
+  "worktree": {
+    "path": "/home/goodnessojonuba/pro-agent/petclinic-platform",
+    "branch": "main",
+    "commit": "aa846c6fb3e3d71faec4083c960fb8b16e1b5a93"
+  },
+  "scoping": {
+    "goal": {
+      "answer": "Implement Epic E-2: Networking (VPC) for the petclinic-platform infrastructure repo. Build a reusable Terraform VPC module with all-public subnets, Internet Gateway, route tables, required EKS subnet tags, and baseline security groups. Wire the module into the dev and prod environment root modules using the CIDRs and AZs defined in docs/technical-spec.md.",
+      "confirmedAt": "2026-06-27T13:20:42.977Z"
+    },
+    "criteria": {
+      "answer": "terraform/modules/vpc/ contains a working VPC module with main.tf, variables.tf, outputs.tf, versions.tf\nVPC module creates a VPC with DNS support and hostnames enabled\nVPC module creates 2 public subnets across 2 AZs with map_public_ip_on_launch=true and required EKS tags\nVPC module creates and attaches an Internet Gateway\nVPC module creates a public route table with 0.0.0.0/0 -> IGW\nVPC module creates baseline security groups: EKS cluster, EKS node, RDS, ALB\nterraform/environments/dev/main.tf calls the VPC module with dev CIDRs and outputs required IDs\nterraform/environments/prod/main.tf calls the VPC module with prod CIDRs and outputs required IDs\nterraform/environments/dev/terraform.tfvars and prod/terraform.tfvars define environment-specific CIDRs and AZs\nterraform validate passes in terraform/environments/dev and terraform/environments/prod\nterraform fmt -recursive -check terraform/ passes",
+      "confirmedAt": "2026-06-27T13:20:42.977Z"
+    },
+    "constraints": {
+      "answer": "Use existing Terraform project conventions (provider ~> 5.0, required_version >= 1.6.0, tags Project/Environment/ManagedBy), All-public subnet design: no NAT Gateway, no private subnets, no VPC endpoints (per ADR-0001), CIDRs must match docs/technical-spec.md: dev 10.0.0.0/16, prod 10.1.0.0/16, Do not modify the application repo (spring-petclinic-microservices)",
+      "confirmedAt": "2026-06-27T13:20:42.977Z"
+    },
+    "phases": {
+      "answer": "Implement VPC module, Wire VPC into environments, Validate VPC configuration",
+      "confirmedAt": "2026-06-27T13:20:42.977Z"
+    },
+    "assumptions": {
+      "answer": "AWS region us-east-2 is used for both environments; At least 2 availability zones are available in us-east-2; The S3 backend from E-1 is bootstrapped and terraform init has been run in both environments; Baseline security groups are created now; rules will be refined in later epics (EKS, RDS, ALB)",
+      "confirmedAt": "2026-06-27T13:20:42.977Z"
+    }
+  },
+  "phases": [
+    {
+      "id": "phase-1",
+      "index": 1,
+      "name": "Implement VPC module",
+      "goal": "Create the reusable VPC module with subnets, IGW, route tables, and security groups",
+      "description": "",
+      "parallel": false,
+      "status": "completed",
+      "steps": [
+        {
+          "id": "step-1",
+          "index": 1,
+          "description": "Create terraform/modules/vpc/versions.tf with AWS provider constraint ~> 5.0",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'hashicorp/aws' terraform/modules/vpc/versions.tf && grep -q '~> 5.0' terraform/modules/vpc/versions.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T13:20:54.656Z",
+          "completedAt": "2026-06-27T13:21:29.577Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T13:21:29.577Z"
+          }
+        },
+        {
+          "id": "step-2",
+          "index": 2,
+          "description": "Create terraform/modules/vpc/variables.tf with project, environment, vpc_cidr, public_subnet_cidrs, availability_zones, tags",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'variable \"vpc_cidr\"' terraform/modules/vpc/variables.tf && grep -q 'variable \"public_subnet_cidrs\"' terraform/modules/vpc/variables.tf && grep -q 'variable \"availability_zones\"' terraform/modules/vpc/variables.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T13:22:51.896Z",
+          "completedAt": "2026-06-27T13:23:22.219Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T13:23:22.219Z"
+          }
+        },
+        {
+          "id": "step-3",
+          "index": 3,
+          "description": "Create terraform/modules/vpc/main.tf with VPC, subnets, IGW, route table, and security groups",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'aws_vpc' terraform/modules/vpc/main.tf && grep -q 'aws_subnet' terraform/modules/vpc/main.tf && grep -q 'aws_internet_gateway' terraform/modules/vpc/main.tf && grep -q 'aws_route_table' terraform/modules/vpc/main.tf && grep -q 'aws_security_group' terraform/modules/vpc/main.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T13:44:15.776Z",
+          "completedAt": "2026-06-27T13:45:40.263Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T13:45:40.263Z"
+          }
+        },
+        {
+          "id": "step-4",
+          "index": 4,
+          "description": "Create terraform/modules/vpc/outputs.tf with vpc_id, public_subnet_ids, eks_cluster_sg_id, eks_node_sg_id, rds_sg_id, alb_sg_id",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'output \"vpc_id\"' terraform/modules/vpc/outputs.tf && grep -q 'output \"public_subnet_ids\"' terraform/modules/vpc/outputs.tf && grep -q 'output \"eks_cluster_sg_id\"' terraform/modules/vpc/outputs.tf && grep -q 'output \"alb_sg_id\"' terraform/modules/vpc/outputs.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T13:46:11.783Z",
+          "completedAt": "2026-06-27T13:46:41.353Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T13:46:41.353Z"
+          }
+        }
+      ],
+      "startedAt": "2026-06-27T13:20:49.093Z",
+      "completedAt": "2026-06-27T13:47:44.990Z",
+      "summary": "Phase 1 completed: created the reusable VPC module under terraform/modules/vpc/ with versions.tf, variables.tf, main.tf, and outputs.tf. The module defines a VPC with DNS support/hostnames, two public subnets with EKS tags, an Internet Gateway, a public route table with 0.0.0.0/0 -> IGW, and baseline security groups for EKS cluster, EKS node, RDS, and ALB.",
+      "grade": {
+        "grade": "A",
+        "rationale": "All gates pass; project checks validate.",
+        "gradedAt": "2026-06-27T13:47:44.988Z"
+      }
+    },
+    {
+      "id": "phase-2",
+      "index": 2,
+      "name": "Wire VPC into environments",
+      "goal": "Call the VPC module from dev and prod root modules and set environment-specific values",
+      "description": "",
+      "parallel": false,
+      "status": "completed",
+      "steps": [
+        {
+          "id": "step-1",
+          "index": 1,
+          "description": "Update terraform/environments/dev/main.tf to call vpc module with dev CIDRs and AZs",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'module \"vpc\"' terraform/environments/dev/main.tf && grep -q 'source = \"../../modules/vpc\"' terraform/environments/dev/main.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T19:49:54.513Z",
+          "completedAt": "2026-06-27T19:50:14.480Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T19:50:14.480Z"
+          }
+        },
+        {
+          "id": "step-2",
+          "index": 2,
+          "description": "Update terraform/environments/prod/main.tf to call vpc module with prod CIDRs and AZs",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'module \"vpc\"' terraform/environments/prod/main.tf && grep -q 'source = \"../../modules/vpc\"' terraform/environments/prod/main.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T19:51:31.509Z",
+          "completedAt": "2026-06-27T19:53:15.540Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T19:53:15.540Z"
+          }
+        },
+        {
+          "id": "step-3",
+          "index": 3,
+          "description": "Populate terraform/environments/dev/terraform.tfvars with vpc_cidr, public_subnet_cidrs, availability_zones",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'vpc_cidr' terraform/environments/dev/terraform.tfvars && grep -q 'public_subnet_cidrs' terraform/environments/dev/terraform.tfvars && grep -q 'availability_zones' terraform/environments/dev/terraform.tfvars",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T19:54:41.162Z",
+          "completedAt": "2026-06-27T19:55:27.996Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T19:55:27.996Z"
+          }
+        },
+        {
+          "id": "step-4",
+          "index": 4,
+          "description": "Populate terraform/environments/prod/terraform.tfvars with vpc_cidr, public_subnet_cidrs, availability_zones",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'vpc_cidr' terraform/environments/prod/terraform.tfvars && grep -q 'public_subnet_cidrs' terraform/environments/prod/terraform.tfvars && grep -q 'availability_zones' terraform/environments/prod/terraform.tfvars",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T19:57:13.412Z",
+          "completedAt": "2026-06-27T19:57:58.176Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T19:57:58.176Z"
+          }
+        }
+      ],
+      "startedAt": "2026-06-27T19:49:19.833Z",
+      "completedAt": "2026-06-27T19:59:00.103Z",
+      "summary": "Phase 2 completed: VPC module is wired into both dev and prod root modules and tfvars files contain required VPC variables.",
+      "grade": {
+        "grade": "A",
+        "rationale": "All gates pass; project checks validate.",
+        "gradedAt": "2026-06-27T19:59:00.101Z"
+      }
+    },
+    {
+      "id": "phase-3",
+      "index": 3,
+      "name": "Validate VPC configuration",
+      "goal": "Ensure Terraform configuration is formatted and valid in both environments",
+      "description": "",
+      "parallel": false,
+      "status": "completed",
+      "steps": [
+        {
+          "id": "step-1",
+          "index": 1,
+          "description": "Run terraform fmt -recursive -check terraform/",
+          "status": "verified",
+          "verification": {
+            "command": "terraform fmt -recursive -check terraform/",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T20:07:07.171Z",
+          "completedAt": "2026-06-27T20:07:36.541Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T20:07:36.541Z"
+          }
+        },
+        {
+          "id": "step-2",
+          "index": 2,
+          "description": "Run terraform validate in dev",
+          "status": "verified",
+          "verification": {
+            "command": "cd terraform/environments/dev && terraform validate",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T20:08:20.154Z",
+          "completedAt": "2026-06-27T20:08:52.517Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T20:08:52.517Z"
+          }
+        },
+        {
+          "id": "step-3",
+          "index": 3,
+          "description": "Run terraform validate in prod",
+          "status": "verified",
+          "verification": {
+            "command": "cd terraform/environments/prod && terraform validate",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T20:09:58.952Z",
+          "completedAt": "2026-06-27T20:10:40.649Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T20:10:40.649Z"
+          }
+        }
+      ],
+      "startedAt": "2026-06-27T20:07:03.329Z",
+      "completedAt": "2026-06-27T20:11:56.678Z",
+      "summary": "Phase 3 completed: Terraform formatting check passed, and terraform validate passed in both dev and prod environments.",
+      "grade": {
+        "grade": "A",
+        "rationale": "All gates pass; project checks validate.",
+        "gradedAt": "2026-06-27T20:11:56.676Z"
+      }
+    }
+  ],
+  "decisions": [],
+  "memories": [],
+  "createdAt": "2026-06-27T13:18:06.776Z",
+  "updatedAt": "2026-06-27T20:19:04.509Z",
+  "goal": "Implement Epic E-2: Networking (VPC) for the petclinic-platform infrastructure repo. Build a reusable Terraform VPC module with all-public subnets, Internet Gateway, route tables, required EKS subnet tags, and baseline security groups. Wire the module into the dev and prod environment root modules using the CIDRs and AZs defined in docs/technical-spec.md.",
+  "successCriteria": [
+    "terraform/modules/vpc/ contains a working VPC module with main.tf, variables.tf, outputs.tf, versions.tf",
+    "VPC module creates a VPC with DNS support and hostnames enabled",
+    "VPC module creates 2 public subnets across 2 AZs with map_public_ip_on_launch=true and required EKS tags",
+    "VPC module creates and attaches an Internet Gateway",
+    "VPC module creates a public route table with 0.0.0.0/0 -> IGW",
+    "VPC module creates baseline security groups: EKS cluster, EKS node, RDS, ALB",
+    "terraform/environments/dev/main.tf calls the VPC module with dev CIDRs and outputs required IDs",
+    "terraform/environments/prod/main.tf calls the VPC module with prod CIDRs and outputs required IDs",
+    "terraform/environments/dev/terraform.tfvars and prod/terraform.tfvars define environment-specific CIDRs and AZs",
+    "terraform validate passes in terraform/environments/dev and terraform/environments/prod",
+    "terraform fmt -recursive -check terraform/ passes"
+  ],
+  "constraints": [
+    "Use existing Terraform project conventions (provider ~> 5.0, required_version >= 1.6.0, tags Project/Environment/ManagedBy)",
+    "All-public subnet design: no NAT Gateway, no private subnets, no VPC endpoints (per ADR-0001)",
+    "CIDRs must match docs/technical-spec.md: dev 10.0.0.0/16, prod 10.1.0.0/16",
+    "Do not modify the application repo (spring-petclinic-microservices)"
+  ],
+  "lastActiveAt": "2026-06-27T20:07:03.329Z",
+  "grade": {
+    "grade": "C",
+    "rationale": "Although all phase and ferment-scope gates claim pass, the visible diff substantiates only documentation/script region-string changes and does not show the required terraform/modules/vpc files, environment root modules, or .tfvars files (they are hidden in truncated untracked files). Gate rationales mention 'grep assertions' and 'terraform commands' without citing specific file paths, commands, or outputs, making verification thin under a pessimistic read.",
+    "gradedAt": "2026-06-27T20:19:04.504Z"
+  }
+}

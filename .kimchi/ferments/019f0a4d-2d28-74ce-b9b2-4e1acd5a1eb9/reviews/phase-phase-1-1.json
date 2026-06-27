@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "fermentId": "019f0a4d-2d28-74ce-b9b2-4e1acd5a1eb9",
+  "phaseId": "phase-1",
+  "phaseName": "Build RDS module",
+  "attempt": 1,
+  "timestamp": "2026-06-27T18:34:13.593Z",
+  "goal": "Create the reusable Terraform RDS module with DB instance, subnet group, parameter group, credentials secret, and security-group ingress rule.",
+  "summary": "Phase 1 built the reusable RDS Terraform module: versions.tf, variables.tf, main.tf, and outputs.tf. The module provisions a MySQL 8.0 db.t4g.micro RDS instance, DB subnet group, parameter group with utf8mb4, a random master password stored in Secrets Manager, a security-group ingress rule from EKS nodes, and required outputs. Module-level formatting and validation passed.",
+  "stepSummaries": "  1. Create terraform/modules/rds/versions.tf with Terraform >= 1.6.0 and AWS provider ~> 5.0 constraints. [verified]\n  2. Create terraform/modules/rds/variables.tf declaring project, environment, subnet_ids, rds_sg_id, eks_node_sg_id, and configurable sizing/credential variables. [verified]\n  3. Create terraform/modules/rds/main.tf with aws_db_subnet_group, aws_db_parameter_group, random_password, aws_secretsmanager_secret/version, aws_db_instance, and security-group ingress rule resources. [verified]\n  4. Create terraform/modules/rds/outputs.tf exporting endpoint, port, db_instance_id, and secret_arn (sensitive). [verified]\n  5. Validate module formatting and syntax with terraform fmt -check and terraform validate. [verified]",
+  "diffAvailable": true,
+  "diffFilesChanged": ".claude/rules/helm.md              |  4 ++--\n .claude/rules/kubernetes.md        |  2 +-\n .claude/rules/pipelines.md         |  2 +-\n .claude/settings.local.json        |  2 +-\n .claude/skills/deploy-dev/SKILL.md |  2 +-\n .mcp.json                          |  2 +-\n CLAUDE.md                          | 10 ++++-----\n README.md                          |  2 +-\n docs/jira-backlog.md               | 30 +++++++++++++--------------\n docs/technical-spec.md             | 42 +++++++++++++++++++-------------------\n scripts/env-status.sh              |  2 +-\n scripts/start-env.sh               |  2 +-\n scripts/stop-env.sh                |  2 +-\n 13 files changed, 52 insertions(+), 52 deletions(-)\n?? .kimchi/docs/verification.md\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2.events.jsonl\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2.json\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2/reviews/phase-phase-1-1.json\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2/reviews/phase-phase-2-1.json\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2/reviews/phase-phase-3-1.json\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2/runtime.json\n?? .kimchi/ferments/019f093a-f5b8-7057-96e5-8bc4c984627f.events.jsonl\n?? .kimchi/ferments/019f093a-f5b8-7057-96e5-8bc4c984627f.json\n?? .kimchi/ferments/019f093a-f5b8-7057-96e5-8bc4c984627f/reviews/phase-phase-1-1.json\n?? .kimchi/ferments/019f093a-f5b8-7057-96e5-8bc4c984627f/runtime.json\n?? .kimchi/ferments/019f0970-ea81-765e-adae-542e59efe9a7.events.jsonl\n?? .kimchi/ferments/019f0970-ea81-765e-adae-542e59efe9a7.json\n?? .kimchi/ferments/019f0970-ea81-765e-adae-542e59efe9a7/reviews/phase-phase-1-1.json\n?? .kimchi/ferments/019f0970-ea81-765e-adae-542e59efe9a7/runtime.json\n?? .kimchi/ferments/019f09c0-a54a-77a2-ab8a-2e84784ceb08.events.jsonl\n?? .kimchi/ferments/019f09c0-a54a-77a2-ab8a-2e84784ceb08.json\n?? .kimchi/ferments/019f09c0-a54a-77a2-ab8a-2e84784ceb08/reviews/phase-phase-1-1.json\n?? .kimchi/ferments/019f09c0-a54a-77a2-ab8a-2e84784ceb08/reviews/phase-phase-2-1.json\n?? .kimchi/ferments/019f09c0-a54a-77a2-ab8a-2e84784ceb08/runtime.json\n[... 55 more untracked files ...]",
+  "flags": [],
+  "derivedGrade": "A",
+  "reviewerRationale": "All gates pass; project checks validate.",
+  "gateVerdicts": [
+    {
+      "id": "F1",
+      "verdict": "pass",
+      "rationale": "All five steps used real verification (file creation, terraform fmt, init, validate, grep checks).",
+      "evidence": "Steps 1-4 verified file contents and formatting; step 5 ran terraform validate successfully."
+    },
+    {
+      "id": "F2",
+      "verdict": "pass",
+      "rationale": "The combined output is a complete reusable module matching the phase goal and success criteria.",
+      "evidence": "terraform/modules/rds/ contains versions.tf, variables.tf, main.tf, outputs.tf and passed terraform validate."
+    },
+    {
+      "id": "F3",
+      "verdict": "pass",
+      "rationale": "Nothing deferred in this phase; remaining wiring and deployment are covered in phases 2 and 3.",
+      "evidence": "Phase 2 will wire the module into dev/prod; Phase 3 will apply dev."
+    }
+  ],
+  "projectChecks": {
+    "discovered": false,
+    "anyFailed": false,
+    "commands": []
+  }
+}

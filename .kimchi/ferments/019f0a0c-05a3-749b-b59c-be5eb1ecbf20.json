@@ -1,0 +1,425 @@
+{
+  "id": "019f0a0c-05a3-749b-b59c-be5eb1ecbf20",
+  "name": "Epic E-4 ECR Registry",
+  "description": "Build a reusable Terraform ECR module that provisions one private repository per microservice (8 total) with scan-on-push, lifecycle policies, and environment-driven tag mutability (MUTABLE dev / IMMUTABLE prod). Wire the module into the dev and prod environment root modules, provide the list of service names via variables/tfvars, and verify with terraform fmt and terraform validate. Optionally create scripts/ecr-login.sh for Docker authentication to the registry.",
+  "status": "complete",
+  "worktree": {
+    "path": "/home/goodnessojonuba/pro-agent/petclinic-platform",
+    "branch": "main",
+    "commit": "aa846c6fb3e3d71faec4083c960fb8b16e1b5a93"
+  },
+  "scoping": {
+    "goal": {
+      "answer": "Build a reusable Terraform ECR module that provisions one private repository per microservice (8 total) with scan-on-push, lifecycle policies, and environment-driven tag mutability (MUTABLE dev / IMMUTABLE prod). Wire the module into the dev and prod environment root modules, provide the list of service names via variables/tfvars, create scripts/ecr-login.sh for Docker authentication to the registry, and verify with terraform fmt and terraform validate.",
+      "confirmedAt": "2026-06-27T17:07:41.971Z"
+    },
+    "criteria": {
+      "answer": "terraform/modules/ecr/ contains versions.tf, variables.tf, main.tf, outputs.tf with provider constraint ~> 5.0 and required_version >= 1.6.0\nECR module creates one aws_ecr_repository per service under the petclinic-{env}/ namespace for all 8 services\nECR module enables image_scanning_configuration scan-on-push for every repository\nECR module attaches an aws_ecr_lifecycle_policy keeping the last 10 tagged images and expiring untagged images after 7 days\nECR module supports configurable image_tag_mutability (MUTABLE for dev, IMMUTABLE for prod)\nECR module outputs repository_urls and repository_arns maps keyed by service_name\nterraform/environments/dev/main.tf calls the ECR module and passes all 8 service_names\nterraform/environments/prod/main.tf calls the ECR module and passes all 8 service_names\nterraform/environments/dev/terraform.tfvars and prod/terraform.tfvars define service_names with the 8 services\nscripts/ecr-login.sh exists, is executable, authenticates Docker to the ECR registry in us-east-2, and accepts an optional --region parameter\nterraform fmt -recursive -check terraform/ passes\nterraform validate passes in terraform/environments/dev\nterraform validate passes in terraform/environments/prod",
+      "confirmedAt": "2026-06-27T17:07:41.971Z"
+    },
+    "constraints": {
+      "answer": "Terraform AWS provider ~> 5.0, Terraform >= 1.6.0, region us-east-2., ECR repos must be per-environment under petclinic-{env}/ namespace., Tag immutability must be MUTABLE for dev and IMMUTABLE for prod., No secrets or credentials committed in code., Do not run terraform apply without explicit approval.",
+      "confirmedAt": "2026-06-27T17:07:41.971Z"
+    },
+    "phases": {
+      "answer": "Build ECR module, Wire ECR into environments, Create ECR login helper",
+      "confirmedAt": "2026-06-27T17:07:41.971Z"
+    },
+    "assumptions": {
+      "answer": "VPC and EKS modules are already implemented and validated (E-2 and E-3 complete).; State backend bucket/table already bootstrapped (E-1 complete).; terraform init has been run in both environment directories, or can be re-run as needed.; AWS credentials are available in the local environment for terraform plan/validate.; Docker CLI is available for testing the ecr-login.sh script, but no actual push is required.",
+      "confirmedAt": "2026-06-27T17:07:41.971Z"
+    }
+  },
+  "phases": [
+    {
+      "id": "phase-1",
+      "index": 1,
+      "name": "Build ECR module",
+      "goal": "Create the reusable Terraform ECR module with repository resources, lifecycle policies, scan-on-push, tag mutability, and outputs.",
+      "description": "Implement terraform/modules/ecr/versions.tf, variables.tf, main.tf, and outputs.tf. The module must accept project, environment, service_names, image_tag_mutability, and tags variables; create aws_ecr_repository resources with scan-on-push; attach aws_ecr_lifecycle_policy resources; and output maps of repository URLs and ARNs.",
+      "parallel": false,
+      "status": "completed",
+      "steps": [
+        {
+          "id": "step-1",
+          "index": 1,
+          "description": "Create terraform/modules/ecr/versions.tf with Terraform >= 1.6.0 and AWS provider ~> 5.0 constraints.",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'required_version = \">= 1.6.0\"' terraform/modules/ecr/versions.tf && grep -q 'version = \"~> 5.0\"' terraform/modules/ecr/versions.tf && echo 'versions OK'",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T17:07:52.176Z",
+          "completedAt": "2026-06-27T17:08:18.552Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:08:18.552Z"
+          }
+        },
+        {
+          "id": "step-2",
+          "index": 2,
+          "description": "Create terraform/modules/ecr/variables.tf declaring project, environment, service_names, image_tag_mutability, scan_on_push, and tags variables.",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'variable \"service_names\"' terraform/modules/ecr/variables.tf && grep -q 'variable \"image_tag_mutability\"' terraform/modules/ecr/variables.tf && echo 'variables OK'",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T17:09:27.701Z",
+          "completedAt": "2026-06-27T17:10:43.775Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:10:43.775Z"
+          }
+        },
+        {
+          "id": "step-3",
+          "index": 3,
+          "description": "Create terraform/modules/ecr/main.tf using aws_ecr_repository (for_each over service_names) with image_scanning_configuration and image_tag_mutability, plus aws_ecr_lifecycle_policy resources.",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'aws_ecr_repository' terraform/modules/ecr/main.tf && grep -q 'aws_ecr_lifecycle_policy' terraform/modules/ecr/main.tf && echo 'main.tf OK'",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T17:11:33.339Z",
+          "completedAt": "2026-06-27T17:12:11.810Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:12:11.810Z"
+          }
+        },
+        {
+          "id": "step-4",
+          "index": 4,
+          "description": "Create terraform/modules/ecr/outputs.tf exporting repository_urls and repository_arns maps.",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'repository_urls' terraform/modules/ecr/outputs.tf && grep -q 'repository_arns' terraform/modules/ecr/outputs.tf && echo 'outputs OK'",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T17:12:55.942Z",
+          "completedAt": "2026-06-27T17:13:33.408Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:13:33.408Z"
+          }
+        },
+        {
+          "id": "step-5",
+          "index": 5,
+          "description": "Validate module formatting and syntax.",
+          "status": "verified",
+          "verification": {
+            "command": "cd terraform/modules/ecr && terraform fmt -check && terraform init -backend=false && terraform validate",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T17:14:36.863Z",
+          "completedAt": "2026-06-27T17:16:35.602Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:16:35.602Z"
+          }
+        }
+      ],
+      "startedAt": "2026-06-27T17:07:47.670Z",
+      "completedAt": "2026-06-27T17:16:44.052Z",
+      "summary": "Phase 1 complete: ECR module files (versions.tf, variables.tf, main.tf, outputs.tf) created and validated. terraform fmt -check and terraform validate passed inside terraform/modules/ecr/.",
+      "grade": {
+        "grade": "A",
+        "rationale": "All gates pass; project checks validate.",
+        "gradedAt": "2026-06-27T17:16:44.051Z"
+      }
+    },
+    {
+      "id": "phase-2",
+      "index": 2,
+      "name": "Wire ECR into environments",
+      "goal": "Call the ECR module from dev and prod root modules, pass the service_names list, declare variables and tfvars, and run project-wide formatting/validation.",
+      "description": "Update terraform/environments/dev/main.tf and prod/main.tf to call module.ecr. Declare service_names variable in both variables.tf files and set the 8 service names in both terraform.tfvars. Run terraform fmt -recursive -check terraform/ and terraform validate in both environments.",
+      "parallel": false,
+      "status": "completed",
+      "steps": [
+        {
+          "id": "step-1",
+          "index": 1,
+          "description": "Update terraform/environments/dev/main.tf to call module.ecr with service_names from var.service_names.",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'module \"ecr\"' terraform/environments/dev/main.tf && grep -q 'service_names' terraform/environments/dev/main.tf && echo 'dev ecr module OK'",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": true,
+          "groupIndex": 1,
+          "startedAt": "2026-06-27T17:17:01.045Z",
+          "completedAt": "2026-06-27T17:18:03.314Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:18:03.314Z"
+          }
+        },
+        {
+          "id": "step-2",
+          "index": 2,
+          "description": "Update terraform/environments/dev/variables.tf to declare service_names variable.",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'variable \"service_names\"' terraform/environments/dev/variables.tf && echo 'dev vars OK'",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": true,
+          "groupIndex": 1,
+          "startedAt": "2026-06-27T17:17:05.115Z",
+          "completedAt": "2026-06-27T17:18:09.992Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:18:09.992Z"
+          }
+        },
+        {
+          "id": "step-3",
+          "index": 3,
+          "description": "Update terraform/environments/dev/terraform.tfvars with the list of 8 service names.",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'config-server' terraform/environments/dev/terraform.tfvars && grep -q 'admin-server' terraform/environments/dev/terraform.tfvars && echo 'dev tfvars OK'",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": true,
+          "groupIndex": 1,
+          "startedAt": "2026-06-27T17:17:05.125Z",
+          "completedAt": "2026-06-27T17:18:16.188Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:18:16.188Z"
+          }
+        },
+        {
+          "id": "step-4",
+          "index": 4,
+          "description": "Update terraform/environments/prod/main.tf to call module.ecr with service_names from var.service_names.",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'module \"ecr\"' terraform/environments/prod/main.tf && grep -q 'service_names' terraform/environments/prod/main.tf && echo 'prod ecr module OK'",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": true,
+          "groupIndex": 2,
+          "startedAt": "2026-06-27T17:18:26.041Z",
+          "completedAt": "2026-06-27T17:19:56.766Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:19:56.766Z"
+          }
+        },
+        {
+          "id": "step-5",
+          "index": 5,
+          "description": "Update terraform/environments/prod/variables.tf to declare service_names variable.",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'variable \"service_names\"' terraform/environments/prod/variables.tf && echo 'prod vars OK'",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": true,
+          "groupIndex": 2,
+          "startedAt": "2026-06-27T17:18:26.050Z",
+          "completedAt": "2026-06-27T17:20:03.002Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:20:03.002Z"
+          }
+        },
+        {
+          "id": "step-6",
+          "index": 6,
+          "description": "Update terraform/environments/prod/terraform.tfvars with the list of 8 service names.",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'config-server' terraform/environments/prod/terraform.tfvars && grep -q 'admin-server' terraform/environments/prod/terraform.tfvars && echo 'prod tfvars OK'",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": true,
+          "groupIndex": 2,
+          "startedAt": "2026-06-27T17:18:26.057Z",
+          "completedAt": "2026-06-27T17:20:08.352Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:20:08.352Z"
+          }
+        },
+        {
+          "id": "step-7",
+          "index": 7,
+          "description": "Run project-wide terraform fmt check and validate both environments.",
+          "status": "verified",
+          "verification": {
+            "command": "terraform fmt -recursive -check terraform/ && cd terraform/environments/dev && terraform validate && cd ../prod && terraform validate",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T17:20:13.598Z",
+          "completedAt": "2026-06-27T17:21:39.391Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:21:39.391Z"
+          }
+        }
+      ],
+      "startedAt": "2026-06-27T17:16:55.347Z",
+      "completedAt": "2026-06-27T17:21:59.160Z",
+      "summary": "Wired the ECR module into both dev and prod environments: module calls, service_names variables, and tfvars populated for all 8 services. Project-wide terraform fmt and validate passed in both environments. Prod main.tf was corrected to use hardcoded project and no undefined local tags.",
+      "grade": {
+        "grade": "A",
+        "rationale": "All gates pass; project checks validate.",
+        "gradedAt": "2026-06-27T17:21:59.158Z"
+      }
+    },
+    {
+      "id": "phase-3",
+      "index": 3,
+      "name": "Create ECR login helper",
+      "goal": "Create scripts/ecr-login.sh that authenticates Docker to the ECR registry in us-east-2.",
+      "description": "Implement a portable shell script that uses aws ecr get-login-password and pipes it to docker login for the account's ECR registry. Accept an optional --region parameter defaulting to us-east-2.",
+      "parallel": false,
+      "status": "completed",
+      "steps": [
+        {
+          "id": "step-1",
+          "index": 1,
+          "description": "Create scripts/ecr-login.sh with AWS account detection, default region us-east-2, optional --region argument, and docker login command.",
+          "status": "verified",
+          "verification": {
+            "command": "test -x scripts/ecr-login.sh && grep -q 'aws ecr get-login-password' scripts/ecr-login.sh && grep -q 'docker login' scripts/ecr-login.sh && echo 'ecr-login OK'",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T17:23:53.118Z",
+          "completedAt": "2026-06-27T17:25:19.075Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:25:19.075Z"
+          }
+        },
+        {
+          "id": "step-2",
+          "index": 2,
+          "description": "Validate script syntax with shellcheck or bash -n.",
+          "status": "verified",
+          "verification": {
+            "command": "bash -n scripts/ecr-login.sh && echo 'syntax OK'",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T17:25:48.405Z",
+          "completedAt": "2026-06-27T17:26:09.659Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T17:26:09.659Z"
+          }
+        }
+      ],
+      "startedAt": "2026-06-27T17:22:05.552Z",
+      "completedAt": "2026-06-27T17:27:13.430Z",
+      "summary": "Created scripts/ecr-login.sh with AWS account detection, default region us-east-2, optional --region argument, docker login via aws ecr get-login-password, made it executable, and validated syntax with bash -n.",
+      "grade": {
+        "grade": "A",
+        "rationale": "All gates pass; project checks validate.",
+        "gradedAt": "2026-06-27T17:27:13.428Z"
+      }
+    }
+  ],
+  "decisions": [],
+  "memories": [],
+  "createdAt": "2026-06-27T17:06:27.875Z",
+  "updatedAt": "2026-06-27T18:11:47.478Z",
+  "goal": "Build a reusable Terraform ECR module that provisions one private repository per microservice (8 total) with scan-on-push, lifecycle policies, and environment-driven tag mutability (MUTABLE dev / IMMUTABLE prod). Wire the module into the dev and prod environment root modules, provide the list of service names via variables/tfvars, create scripts/ecr-login.sh for Docker authentication to the registry, and verify with terraform fmt and terraform validate.",
+  "successCriteria": [
+    "terraform/modules/ecr/ contains versions.tf, variables.tf, main.tf, outputs.tf with provider constraint ~> 5.0 and required_version >= 1.6.0",
+    "ECR module creates one aws_ecr_repository per service under the petclinic-{env}/ namespace for all 8 services",
+    "ECR module enables image_scanning_configuration scan-on-push for every repository",
+    "ECR module attaches an aws_ecr_lifecycle_policy keeping the last 10 tagged images and expiring untagged images after 7 days",
+    "ECR module supports configurable image_tag_mutability (MUTABLE for dev, IMMUTABLE for prod)",
+    "ECR module outputs repository_urls and repository_arns maps keyed by service_name",
+    "terraform/environments/dev/main.tf calls the ECR module and passes all 8 service_names",
+    "terraform/environments/prod/main.tf calls the ECR module and passes all 8 service_names",
+    "terraform/environments/dev/terraform.tfvars and prod/terraform.tfvars define service_names with the 8 services",
+    "scripts/ecr-login.sh exists, is executable, authenticates Docker to the ECR registry in us-east-2, and accepts an optional --region parameter",
+    "terraform fmt -recursive -check terraform/ passes",
+    "terraform validate passes in terraform/environments/dev",
+    "terraform validate passes in terraform/environments/prod"
+  ],
+  "constraints": [
+    "Terraform AWS provider ~> 5.0, Terraform >= 1.6.0, region us-east-2.",
+    "ECR repos must be per-environment under petclinic-{env}/ namespace.",
+    "Tag immutability must be MUTABLE for dev and IMMUTABLE for prod.",
+    "No secrets or credentials committed in code.",
+    "Do not run terraform apply without explicit approval."
+  ],
+  "lastActiveAt": "2026-06-27T17:22:05.552Z",
+  "grade": {
+    "grade": "C",
+    "rationale": "The diff only shows unrelated region-string edits in .claude files, docs, and metadata; none of the required ECR module files, environment main.tf/tfvars, or scripts/ecr-login.sh appear in the visible changed-file list or diff snippets. The phase gate rationales cite only generic terraform fmt/validate without grounding in specific artifact files, and the final summary claims a complete ECR module that the diff does not substantiate, making coverage suspect.",
+    "gradedAt": "2026-06-27T18:11:47.464Z"
+  }
+}

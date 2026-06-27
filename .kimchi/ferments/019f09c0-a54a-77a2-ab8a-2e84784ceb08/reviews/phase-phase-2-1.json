@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "fermentId": "019f09c0-a54a-77a2-ab8a-2e84784ceb08",
+  "phaseId": "phase-2",
+  "phaseName": "Wire EKS into environments",
+  "attempt": 1,
+  "timestamp": "2026-06-27T16:50:49.911Z",
+  "goal": "Call the EKS module from dev and prod root modules, pass VPC outputs, and validate both environments",
+  "summary": "Phase 2 completed: dev and prod root modules now call the EKS module, pass VPC outputs, declare EKS variables, provide environment-specific tfvars, and both environments pass terraform fmt and terraform validate.",
+  "stepSummaries": "  1. Update terraform/environments/dev/main.tf to call module \"eks\" and pass VPC outputs [verified]\n  2. Update terraform/environments/dev/variables.tf to declare EKS input variables [verified]\n  3. Update terraform/environments/dev/terraform.tfvars with dev EKS values (cluster_version=1.29, node_instance_types=[\"t4g.small\"], min=2, max=4, desired=2) [verified]\n  4. Update terraform/environments/prod/main.tf to call module \"eks\" and pass VPC outputs [verified]\n  5. Update terraform/environments/prod/variables.tf to declare EKS input variables [verified]\n  6. Update terraform/environments/prod/terraform.tfvars with prod EKS values [verified]\n  7. Run terraform fmt -recursive -check terraform/ [verified]\n  8. Run terraform validate in dev [verified]\n  9. Run terraform validate in prod [verified]",
+  "diffAvailable": true,
+  "diffFilesChanged": ".claude/rules/helm.md              |  4 ++--\n .claude/rules/kubernetes.md        |  2 +-\n .claude/rules/pipelines.md         |  2 +-\n .claude/settings.local.json        |  2 +-\n .claude/skills/deploy-dev/SKILL.md |  2 +-\n .mcp.json                          |  2 +-\n CLAUDE.md                          | 10 ++++-----\n README.md                          |  2 +-\n docs/jira-backlog.md               | 30 +++++++++++++--------------\n docs/technical-spec.md             | 42 +++++++++++++++++++-------------------\n scripts/env-status.sh              |  2 +-\n scripts/start-env.sh               |  2 +-\n scripts/stop-env.sh                |  2 +-\n 13 files changed, 52 insertions(+), 52 deletions(-)\n?? .kimchi/docs/verification.md\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2.events.jsonl\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2.json\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2/reviews/phase-phase-1-1.json\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2/reviews/phase-phase-2-1.json\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2/reviews/phase-phase-3-1.json\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2/runtime.json\n?? .kimchi/ferments/019f093a-f5b8-7057-96e5-8bc4c984627f.events.jsonl\n?? .kimchi/ferments/019f093a-f5b8-7057-96e5-8bc4c984627f.json\n?? .kimchi/ferments/019f093a-f5b8-7057-96e5-8bc4c984627f/reviews/phase-phase-1-1.json\n?? .kimchi/ferments/019f093a-f5b8-7057-96e5-8bc4c984627f/runtime.json\n?? .kimchi/ferments/019f0970-ea81-765e-adae-542e59efe9a7.events.jsonl\n?? .kimchi/ferments/019f0970-ea81-765e-adae-542e59efe9a7.json\n?? .kimchi/ferments/019f0970-ea81-765e-adae-542e59efe9a7/reviews/phase-phase-1-1.json\n?? .kimchi/ferments/019f0970-ea81-765e-adae-542e59efe9a7/runtime.json\n?? .kimchi/ferments/019f09c0-a54a-77a2-ab8a-2e84784ceb08.events.jsonl\n?? .kimchi/ferments/019f09c0-a54a-77a2-ab8a-2e84784ceb08.json\n?? .kimchi/ferments/019f09c0-a54a-77a2-ab8a-2e84784ceb08/reviews/phase-phase-1-1.json\n?? .kimchi/ferments/019f09c0-a54a-77a2-ab8a-2e84784ceb08/runtime.json\n?? scripts/bootstrap-state.sh\n[... 42 more untracked files ...]",
+  "flags": [],
+  "derivedGrade": "A",
+  "reviewerRationale": "All gates pass; project checks validate.",
+  "gateVerdicts": [
+    {
+      "id": "F1",
+      "verdict": "pass",
+      "rationale": "All 9 steps verified with real commands: grep, terraform fmt, terraform validate.",
+      "evidence": "Steps 1-6 used grep and terraform fmt -check; Steps 7-9 used terraform fmt -recursive -check and terraform validate in dev/prod."
+    },
+    {
+      "id": "F2",
+      "verdict": "pass",
+      "rationale": "Phase goal met: both environment root modules call module.eks, pass VPC outputs, and validations pass.",
+      "evidence": "terraform/environments/dev/main.tf and prod/main.tf contain module 'eks'; terraform fmt and validate both pass."
+    },
+    {
+      "id": "F3",
+      "verdict": "pass",
+      "rationale": "Nothing deferred in Phase 2.",
+      "evidence": "n/a"
+    }
+  ],
+  "projectChecks": {
+    "discovered": false,
+    "anyFailed": false,
+    "commands": []
+  }
+}

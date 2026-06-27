@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "fermentId": "019f09c0-a54a-77a2-ab8a-2e84784ceb08",
+  "phaseId": "phase-1",
+  "phaseName": "Implement EKS module",
+  "attempt": 1,
+  "timestamp": "2026-06-27T16:01:52.029Z",
+  "goal": "Create the reusable EKS Terraform module with cluster, IAM roles, OIDC, managed node group, access entry, and add-ons",
+  "summary": "Created the reusable EKS Terraform module with versions.tf, variables.tf, main.tf, and outputs.tf. The module provisions an EKS v1.29 cluster with logging, cluster IAM role, OIDC provider, managed node group with t4g.small ARM64 nodes, node IAM role, access entry for the deploying principal, and core add-ons. Module passes terraform fmt and terraform validate.",
+  "stepSummaries": "  1. Create terraform/modules/eks/versions.tf with Terraform and AWS provider constraints [verified]\n  2. Create terraform/modules/eks/variables.tf with required inputs (project, environment, vpc_id, subnet_ids, cluster_sg_id, node_sg_id, cluster_version, tags, node group sizing) [verified]\n  3. Create terraform/modules/eks/main.tf with cluster IAM role, EKS cluster, OIDC provider, node IAM role, managed node group, access entry, and core add-ons [verified]\n  4. Create terraform/modules/eks/outputs.tf with cluster_name, cluster_endpoint, cluster_ca_certificate, oidc_provider_arn, oidc_provider_url, node_group_name, node_role_arn [verified]\n  5. Run terraform validate inside terraform/modules/eks/ [verified]",
+  "diffAvailable": true,
+  "diffFilesChanged": ".claude/rules/helm.md              |  4 ++--\n .claude/rules/kubernetes.md        |  2 +-\n .claude/rules/pipelines.md         |  2 +-\n .claude/settings.local.json        |  2 +-\n .claude/skills/deploy-dev/SKILL.md |  2 +-\n .mcp.json                          |  2 +-\n CLAUDE.md                          | 10 ++++-----\n README.md                          |  2 +-\n docs/jira-backlog.md               | 30 +++++++++++++--------------\n docs/technical-spec.md             | 42 +++++++++++++++++++-------------------\n scripts/env-status.sh              |  2 +-\n scripts/start-env.sh               |  2 +-\n scripts/stop-env.sh                |  2 +-\n 13 files changed, 52 insertions(+), 52 deletions(-)\n?? .kimchi/docs/verification.md\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2.events.jsonl\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2.json\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2/reviews/phase-phase-1-1.json\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2/reviews/phase-phase-2-1.json\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2/reviews/phase-phase-3-1.json\n?? .kimchi/ferments/019f090b-db2d-7328-845c-a97e2cb46ea2/runtime.json\n?? .kimchi/ferments/019f093a-f5b8-7057-96e5-8bc4c984627f.events.jsonl\n?? .kimchi/ferments/019f093a-f5b8-7057-96e5-8bc4c984627f.json\n?? .kimchi/ferments/019f093a-f5b8-7057-96e5-8bc4c984627f/reviews/phase-phase-1-1.json\n?? .kimchi/ferments/019f093a-f5b8-7057-96e5-8bc4c984627f/runtime.json\n?? .kimchi/ferments/019f0970-ea81-765e-adae-542e59efe9a7.events.jsonl\n?? .kimchi/ferments/019f0970-ea81-765e-adae-542e59efe9a7.json\n?? .kimchi/ferments/019f0970-ea81-765e-adae-542e59efe9a7/reviews/phase-phase-1-1.json\n?? .kimchi/ferments/019f0970-ea81-765e-adae-542e59efe9a7/runtime.json\n?? .kimchi/ferments/019f09c0-a54a-77a2-ab8a-2e84784ceb08.events.jsonl\n?? .kimchi/ferments/019f09c0-a54a-77a2-ab8a-2e84784ceb08.json\n?? .kimchi/ferments/019f09c0-a54a-77a2-ab8a-2e84784ceb08/runtime.json\n?? scripts/bootstrap-state.sh\n?? terraform/environments/dev/.terraform.lock.hcl\n[... 41 more untracked files ...]",
+  "flags": [],
+  "derivedGrade": "A",
+  "reviewerRationale": "All gates pass; project checks validate.",
+  "gateVerdicts": [
+    {
+      "id": "F1",
+      "verdict": "pass",
+      "rationale": "Every step used real verification: grep checks, terraform fmt, terraform init -backend=false, and terraform validate in the module directory.",
+      "evidence": "Step 3 and Step 5 reports include terraform validate Success! The configuration is valid."
+    },
+    {
+      "id": "F2",
+      "verdict": "pass",
+      "rationale": "Phase output is the complete EKS module with all required files and resources, validated as a standalone module.",
+      "evidence": "terraform/modules/eks/ contains versions.tf, variables.tf, main.tf, outputs.tf; all required resources and outputs verified via grep and validation."
+    },
+    {
+      "id": "F3",
+      "verdict": "pass",
+      "rationale": "Nothing deferred; all planned Phase 1 work completed.",
+      "evidence": "All 5 steps completed and verified."
+    }
+  ],
+  "projectChecks": {
+    "discovered": false,
+    "anyFailed": false,
+    "commands": []
+  }
+}

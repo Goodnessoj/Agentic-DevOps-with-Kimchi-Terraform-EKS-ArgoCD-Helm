@@ -1,0 +1,405 @@
+{
+  "id": "019f09c0-a54a-77a2-ab8a-2e84784ceb08",
+  "name": "Epic E-3 EKS Cluster",
+  "description": "Build a reusable Terraform EKS module that provisions an EKS v1.29 cluster, cluster IAM role, OIDC provider, managed node group with ARM64 t4g.small instances, node IAM role, access entry for the deploying principal, and core EKS add-ons. Then wire the module into the dev and prod environment root modules using VPC module outputs and verify with terraform fmt and terraform validate.",
+  "status": "complete",
+  "worktree": {
+    "path": "/home/goodnessojonuba/pro-agent/petclinic-platform",
+    "branch": "main",
+    "commit": "aa846c6fb3e3d71faec4083c960fb8b16e1b5a93"
+  },
+  "scoping": {
+    "goal": {
+      "answer": "Build a reusable Terraform EKS module that provisions an EKS v1.29 cluster, cluster IAM role, OIDC provider, managed node group with ARM64 t4g.small instances, node IAM role, access entry for the deploying principal, and core EKS add-ons. Then wire the module into the dev and prod environment root modules using VPC module outputs and verify with terraform fmt and terraform validate.",
+      "confirmedAt": "2026-06-27T15:45:46.694Z"
+    },
+    "criteria": {
+      "answer": "terraform/modules/eks/ contains versions.tf, variables.tf, main.tf, outputs.tf with provider constraint ~> 5.0 and required_version >= 1.6.0\nEKS module creates an aws_eks_cluster named petclinic-{env} with Kubernetes version 1.29, public endpoint, and logging enabled for api, audit, authenticator\nEKS module creates a cluster IAM role with AmazonEKSClusterPolicy attached\nEKS module creates an OIDC provider from the cluster identity issuer\nEKS module creates a managed node group with t4g.small instances (ARM64/Graviton), min_size=2, max_size=4, desired_size=2, disk_size=20, in public subnets\nEKS module creates a node IAM role with AmazonEKSWorkerNodePolicy, AmazonEKS_CNI_Policy, and AmazonEC2ContainerRegistryReadOnly attached\nEKS module creates an access entry or aws-auth configuration granting cluster admin access to the deploying IAM principal\nEKS module installs core EKS managed add-ons: coredns, kube-proxy, vpc-cni\nEKS module outputs cluster_name, cluster_endpoint, cluster_ca_certificate, oidc_provider_arn, oidc_provider_url, node_group_name, and node_role_arn\nterraform/environments/dev/main.tf calls the EKS module and passes vpc_id, public_subnet_ids, eks_cluster_sg_id, and eks_node_sg_id from module.vpc outputs\nterraform/environments/prod/main.tf calls the EKS module and passes vpc_id, public_subnet_ids, eks_cluster_sg_id, and eks_node_sg_id from module.vpc outputs\nterraform fmt -recursive -check terraform/ passes\nterraform validate passes in terraform/environments/dev\nterraform validate passes in terraform/environments/prod",
+      "confirmedAt": "2026-06-27T15:45:46.694Z"
+    },
+    "constraints": {
+      "answer": "AWS region us-east-2 for both environments, All-public subnet design (no NAT Gateway, no private subnets), Node instances must be t4g.small ARM64 (Graviton) with AL2_ARM_64 AMI type, Cluster and node IAM roles must use least-privilege AWS managed policies only, Cluster and node groups must be placed in public subnets from the VPC module, Naming convention: petclinic-{env}-{resource}, Required tags: Project=petclinic, Environment={dev|prod}, ManagedBy=terraform, Do not modify the application repo, Do not run terraform apply or create real AWS resources",
+      "confirmedAt": "2026-06-27T15:45:46.694Z"
+    },
+    "phases": {
+      "answer": "Implement EKS module, Wire EKS into environments",
+      "confirmedAt": "2026-06-27T15:45:46.694Z"
+    },
+    "assumptions": {
+      "answer": "VPC module (E-2) is complete and exports vpc_id, public_subnet_ids, eks_cluster_sg_id, eks_node_sg_id; Provider and backend configuration in terraform/environments/dev/ and prod/ already exists from Epic E-1; terraform init has already been run in both environment directories; AWS account and credentials are available for terraform init/validate",
+      "confirmedAt": "2026-06-27T15:45:46.694Z"
+    }
+  },
+  "phases": [
+    {
+      "id": "phase-1",
+      "index": 1,
+      "name": "Implement EKS module",
+      "goal": "Create the reusable EKS Terraform module with cluster, IAM roles, OIDC, managed node group, access entry, and add-ons",
+      "description": "",
+      "parallel": false,
+      "status": "completed",
+      "steps": [
+        {
+          "id": "step-1",
+          "index": 1,
+          "description": "Create terraform/modules/eks/versions.tf with Terraform and AWS provider constraints",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'required_version' terraform/modules/eks/versions.tf && grep -q '~> 5.0' terraform/modules/eks/versions.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T15:46:25.003Z",
+          "completedAt": "2026-06-27T15:47:11.853Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T15:47:11.853Z"
+          }
+        },
+        {
+          "id": "step-2",
+          "index": 2,
+          "description": "Create terraform/modules/eks/variables.tf with required inputs (project, environment, vpc_id, subnet_ids, cluster_sg_id, node_sg_id, cluster_version, tags, node group sizing)",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'variable \"vpc_id\"' terraform/modules/eks/variables.tf && grep -q 'variable \"subnet_ids\"' terraform/modules/eks/variables.tf && grep -q 'variable \"node_instance_types\"' terraform/modules/eks/variables.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T15:50:15.297Z",
+          "completedAt": "2026-06-27T15:51:12.931Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T15:51:12.931Z"
+          }
+        },
+        {
+          "id": "step-3",
+          "index": 3,
+          "description": "Create terraform/modules/eks/main.tf with cluster IAM role, EKS cluster, OIDC provider, node IAM role, managed node group, access entry, and core add-ons",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'aws_eks_cluster' terraform/modules/eks/main.tf && grep -q 'aws_eks_node_group' terraform/modules/eks/main.tf && grep -q 'aws_iam_openid_connect_provider' terraform/modules/eks/main.tf && grep -q 'aws_eks_access_entry' terraform/modules/eks/main.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T15:52:27.389Z",
+          "completedAt": "2026-06-27T15:55:25.286Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T15:55:25.286Z"
+          }
+        },
+        {
+          "id": "step-4",
+          "index": 4,
+          "description": "Create terraform/modules/eks/outputs.tf with cluster_name, cluster_endpoint, cluster_ca_certificate, oidc_provider_arn, oidc_provider_url, node_group_name, node_role_arn",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'cluster_name' terraform/modules/eks/outputs.tf && grep -q 'cluster_endpoint' terraform/modules/eks/outputs.tf && grep -q 'oidc_provider_arn' terraform/modules/eks/outputs.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T15:56:21.761Z",
+          "completedAt": "2026-06-27T15:58:07.824Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T15:58:07.824Z"
+          }
+        },
+        {
+          "id": "step-5",
+          "index": 5,
+          "description": "Run terraform validate inside terraform/modules/eks/",
+          "status": "verified",
+          "verification": {
+            "command": "cd terraform/modules/eks && terraform init -backend=false && terraform validate",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T16:00:21.085Z",
+          "completedAt": "2026-06-27T16:00:51.744Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T16:00:51.744Z"
+          }
+        }
+      ],
+      "startedAt": "2026-06-27T15:45:58.779Z",
+      "completedAt": "2026-06-27T16:01:52.031Z",
+      "summary": "Created the reusable EKS Terraform module with versions.tf, variables.tf, main.tf, and outputs.tf. The module provisions an EKS v1.29 cluster with logging, cluster IAM role, OIDC provider, managed node group with t4g.small ARM64 nodes, node IAM role, access entry for the deploying principal, and core add-ons. Module passes terraform fmt and terraform validate.",
+      "grade": {
+        "grade": "A",
+        "rationale": "All gates pass; project checks validate.",
+        "gradedAt": "2026-06-27T16:01:52.030Z"
+      }
+    },
+    {
+      "id": "phase-2",
+      "index": 2,
+      "name": "Wire EKS into environments",
+      "goal": "Call the EKS module from dev and prod root modules, pass VPC outputs, and validate both environments",
+      "description": "",
+      "parallel": false,
+      "status": "completed",
+      "steps": [
+        {
+          "id": "step-1",
+          "index": 1,
+          "description": "Update terraform/environments/dev/main.tf to call module \"eks\" and pass VPC outputs",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'module \"eks\"' terraform/environments/dev/main.tf && grep -q 'source = \"../../modules/eks\"' terraform/environments/dev/main.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T16:03:02.921Z",
+          "completedAt": "2026-06-27T16:03:54.369Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T16:03:54.369Z"
+          }
+        },
+        {
+          "id": "step-2",
+          "index": 2,
+          "description": "Update terraform/environments/dev/variables.tf to declare EKS input variables",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'variable \"cluster_version\"' terraform/environments/dev/variables.tf || grep -q 'variable \"node_instance_types\"' terraform/environments/dev/variables.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T16:05:30.953Z",
+          "completedAt": "2026-06-27T16:06:36.094Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T16:06:36.094Z"
+          }
+        },
+        {
+          "id": "step-3",
+          "index": 3,
+          "description": "Update terraform/environments/dev/terraform.tfvars with dev EKS values (cluster_version=1.29, node_instance_types=[\"t4g.small\"], min=2, max=4, desired=2)",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'cluster_version' terraform/environments/dev/terraform.tfvars && grep -q 't4g.small' terraform/environments/dev/terraform.tfvars",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T16:08:05.131Z",
+          "completedAt": "2026-06-27T16:08:37.182Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T16:08:37.182Z"
+          }
+        },
+        {
+          "id": "step-4",
+          "index": 4,
+          "description": "Update terraform/environments/prod/main.tf to call module \"eks\" and pass VPC outputs",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'module \"eks\"' terraform/environments/prod/main.tf && grep -q 'source = \"../../modules/eks\"' terraform/environments/prod/main.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T16:39:54.649Z",
+          "completedAt": "2026-06-27T16:40:38.975Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T16:40:38.975Z"
+          }
+        },
+        {
+          "id": "step-5",
+          "index": 5,
+          "description": "Update terraform/environments/prod/variables.tf to declare EKS input variables",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'variable \"cluster_version\"' terraform/environments/prod/variables.tf || grep -q 'variable \"node_instance_types\"' terraform/environments/prod/variables.tf",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T16:42:02.377Z",
+          "completedAt": "2026-06-27T16:42:35.421Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T16:42:35.421Z"
+          }
+        },
+        {
+          "id": "step-6",
+          "index": 6,
+          "description": "Update terraform/environments/prod/terraform.tfvars with prod EKS values",
+          "status": "verified",
+          "verification": {
+            "command": "grep -q 'cluster_version' terraform/environments/prod/terraform.tfvars && grep -q 't4g.small' terraform/environments/prod/terraform.tfvars",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T16:44:07.729Z",
+          "completedAt": "2026-06-27T16:44:48.304Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T16:44:48.304Z"
+          }
+        },
+        {
+          "id": "step-7",
+          "index": 7,
+          "description": "Run terraform fmt -recursive -check terraform/",
+          "status": "verified",
+          "verification": {
+            "command": "terraform fmt -recursive -check terraform/",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T16:45:50.653Z",
+          "completedAt": "2026-06-27T16:46:19.594Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T16:46:19.594Z"
+          }
+        },
+        {
+          "id": "step-8",
+          "index": 8,
+          "description": "Run terraform validate in dev",
+          "status": "verified",
+          "verification": {
+            "command": "cd terraform/environments/dev && terraform validate",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T16:47:21.107Z",
+          "completedAt": "2026-06-27T16:48:28.363Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T16:48:28.363Z"
+          }
+        },
+        {
+          "id": "step-9",
+          "index": 9,
+          "description": "Run terraform validate in prod",
+          "status": "verified",
+          "verification": {
+            "command": "cd terraform/environments/prod && terraform validate",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-06-27T16:49:10.409Z",
+          "completedAt": "2026-06-27T16:49:50.702Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-06-27T16:49:50.702Z"
+          }
+        }
+      ],
+      "startedAt": "2026-06-27T16:02:59.853Z",
+      "completedAt": "2026-06-27T16:50:49.913Z",
+      "summary": "Phase 2 completed: dev and prod root modules now call the EKS module, pass VPC outputs, declare EKS variables, provide environment-specific tfvars, and both environments pass terraform fmt and terraform validate.",
+      "grade": {
+        "grade": "A",
+        "rationale": "All gates pass; project checks validate.",
+        "gradedAt": "2026-06-27T16:50:49.911Z"
+      }
+    }
+  ],
+  "decisions": [],
+  "memories": [],
+  "createdAt": "2026-06-27T15:44:08.010Z",
+  "updatedAt": "2026-06-27T16:59:30.152Z",
+  "goal": "Build a reusable Terraform EKS module that provisions an EKS v1.29 cluster, cluster IAM role, OIDC provider, managed node group with ARM64 t4g.small instances, node IAM role, access entry for the deploying principal, and core EKS add-ons. Then wire the module into the dev and prod environment root modules using VPC module outputs and verify with terraform fmt and terraform validate.",
+  "successCriteria": [
+    "terraform/modules/eks/ contains versions.tf, variables.tf, main.tf, outputs.tf with provider constraint ~> 5.0 and required_version >= 1.6.0",
+    "EKS module creates an aws_eks_cluster named petclinic-{env} with Kubernetes version 1.29, public endpoint, and logging enabled for api, audit, authenticator",
+    "EKS module creates a cluster IAM role with AmazonEKSClusterPolicy attached",
+    "EKS module creates an OIDC provider from the cluster identity issuer",
+    "EKS module creates a managed node group with t4g.small instances (ARM64/Graviton), min_size=2, max_size=4, desired_size=2, disk_size=20, in public subnets",
+    "EKS module creates a node IAM role with AmazonEKSWorkerNodePolicy, AmazonEKS_CNI_Policy, and AmazonEC2ContainerRegistryReadOnly attached",
+    "EKS module creates an access entry or aws-auth configuration granting cluster admin access to the deploying IAM principal",
+    "EKS module installs core EKS managed add-ons: coredns, kube-proxy, vpc-cni",
+    "EKS module outputs cluster_name, cluster_endpoint, cluster_ca_certificate, oidc_provider_arn, oidc_provider_url, node_group_name, and node_role_arn",
+    "terraform/environments/dev/main.tf calls the EKS module and passes vpc_id, public_subnet_ids, eks_cluster_sg_id, and eks_node_sg_id from module.vpc outputs",
+    "terraform/environments/prod/main.tf calls the EKS module and passes vpc_id, public_subnet_ids, eks_cluster_sg_id, and eks_node_sg_id from module.vpc outputs",
+    "terraform fmt -recursive -check terraform/ passes",
+    "terraform validate passes in terraform/environments/dev",
+    "terraform validate passes in terraform/environments/prod"
+  ],
+  "constraints": [
+    "AWS region us-east-2 for both environments",
+    "All-public subnet design (no NAT Gateway, no private subnets)",
+    "Node instances must be t4g.small ARM64 (Graviton) with AL2_ARM_64 AMI type",
+    "Cluster and node IAM roles must use least-privilege AWS managed policies only",
+    "Cluster and node groups must be placed in public subnets from the VPC module",
+    "Naming convention: petclinic-{env}-{resource}",
+    "Required tags: Project=petclinic, Environment={dev|prod}, ManagedBy=terraform",
+    "Do not modify the application repo",
+    "Do not run terraform apply or create real AWS resources"
+  ],
+  "lastActiveAt": "2026-06-27T16:02:59.853Z",
+  "grade": {
+    "grade": "C",
+    "rationale": "The visible diff is dominated by unrelated .claude file region-string changes, documentation updates, and scripts; it does not substantiate the required Terraform artifacts (terraform/modules/eks/*.tf, terraform/environments/dev/main.tf, terraform/environments/prod/main.tf) that the success criteria and final summary depend on. Although the phase gates cite real terraform fmt and terraform validate commands, the key EKS module files are hidden in the truncated/untracked file list, so coverage remains suspect and unverified from the provided evidence.",
+    "gradedAt": "2026-06-27T16:59:30.149Z"
+  }
+}
