@@ -1,10 +1,13 @@
 {
   "mcpServers": {
-    "awslabs.terraform-mcp-server": {
+    "hashicorp.terraform-mcp-server": {
       "type": "stdio",
-      "command": "uvx",
+      "command": "docker",
       "args": [
-        "awslabs.terraform-mcp-server@latest"
+        "run",
+        "--rm",
+        "--interactive",
+        "hashicorp/terraform-mcp-server:1.0.0"
       ],
       "env": {
         "FASTMCP_LOG_LEVEL": "ERROR"
