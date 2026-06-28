@@ -1,0 +1,3 @@
+image:
+  repository: "271369142928.dkr.ecr.us-east-2.amazonaws.com/petclinic-dev/vets-service"
+  tag: "v1.0.0"

@@ -1,0 +1,90 @@
+# update-image-tags.yml
+#
+# CD trigger receiver for the Petclinic platform repo.
+# Triggered by a repository_dispatch event from the application repo once it has
+# built and pushed new ARM64 images to ECR. This workflow updates the image tag
+# in helm-values/{service}.yaml for only the services included in the dispatch
+# payload, commits the change, and pushes back to main so ArgoCD can sync it.
+#
+# Required GitHub permissions:
+#   contents: write  (to commit and push helm-values changes)
+
+name: Update Image Tags
+
+on:
+  repository_dispatch:
+    types: [app-image-built]
+
+permissions:
+  contents: write
+
+jobs:
+  update-tags:
+    name: Update Helm values image tags
+    runs-on: ubuntu-latest
+
+    steps:
+      # TODO(security): pin each action to a full commit SHA to prevent supply-chain
+      # attacks. Replace "@vN" with "@<sha>  # vN.N.N" once SHAs are verified.
+      - name: Checkout platform repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+
+      - name: Install yq
+        uses: mikefarah/yq@v4
+
+      - name: Update image tags
+        env:
+          SHA: ${{ github.event.client_payload.sha }}
+          SERVICES: ${{ github.event.client_payload.services }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${SHA}" ]]; then
+            echo "ERROR: client_payload.sha is missing" >&2
+            exit 1
+          fi
+
+          if [[ -z "${SERVICES}" ]]; then
+            echo "ERROR: client_payload.services is missing" >&2
+            exit 1
+          fi
+
+          echo "Updating image tags to ${SHA} for services: ${SERVICES}"
+
+          for service in ${SERVICES}; do
+            values_file="helm-values/${service}.yaml"
+            if [[ ! -f "${values_file}" ]]; then
+              echo "ERROR: Values file not found: ${values_file}" >&2
+              exit 1
+            fi
+
+            echo "  -> ${service}: ${values_file}"
+            yq -i ".image.tag = \"${SHA}\"" "${values_file}"
+          done
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push updated image tags
+        env:
+          SHA: ${{ github.event.client_payload.sha }}
+          SERVICES: ${{ github.event.client_payload.services }}
+        run: |
+          set -euo pipefail
+
+          git add helm-values/
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit — image tags already up to date."
+            exit 0
+          fi
+
+          git commit -m "ci: update image tags to ${SHA} (${SERVICES})"
+          git push origin main
+
+          echo "Committed image tag updates for: ${SERVICES}"

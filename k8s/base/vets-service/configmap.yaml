@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vets-service
+  namespace: petclinic-dev
+  labels:
+    app.kubernetes.io/name: vets-service
+    app.kubernetes.io/part-of: petclinic
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: service
+data:
+  SPRING_PROFILES_ACTIVE: "docker,mysql,production"
+  CONFIG_SERVER_URL: "http://config-server:8888"
+  DISCOVERY_SERVER_URL: "http://discovery-server:8761"
+  SPRING_DATASOURCE_URL: "jdbc:mysql://petclinic-dev-mysql.cx0wc6acwy6x.us-east-2.rds.amazonaws.com:3306/petclinic"

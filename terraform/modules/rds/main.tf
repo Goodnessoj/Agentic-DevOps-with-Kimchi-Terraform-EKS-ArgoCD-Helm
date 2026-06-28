@@ -41,8 +41,9 @@ resource "aws_db_parameter_group" "this" {
 }
 
 resource "random_password" "master" {
-  length  = 16
-  special = true
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
 resource "aws_secretsmanager_secret" "rds_credentials" {

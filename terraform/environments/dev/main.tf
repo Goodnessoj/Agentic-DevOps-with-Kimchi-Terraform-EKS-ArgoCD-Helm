@@ -62,3 +62,14 @@ module "secrets" {
   oidc_provider_arn = module.eks.oidc_provider_arn
   oidc_provider_url = module.eks.oidc_provider_url
 }
+
+module "github_oidc" {
+  source = "../../modules/github-oidc"
+
+  project     = "petclinic"
+  environment = var.environment
+  github_org  = "Goodnessoj"
+  github_repo = "spring-petclinic-microservices"
+
+  tags = {}
+}

@@ -1,0 +1,3 @@
+image:
+  repository: "271369142928.dkr.ecr.us-east-2.amazonaws.com/petclinic-dev/admin-server"
+  tag: "v1.0.0"

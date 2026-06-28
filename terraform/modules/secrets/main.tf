@@ -11,9 +11,10 @@ locals {
 data "aws_caller_identity" "current" {}
 
 resource "aws_secretsmanager_secret" "openai_api_key" {
-  name        = "${var.project}/${var.environment}/openai-api-key"
-  description = "OpenAI API key for GenAI service (${var.environment})"
-  kms_key_id  = null
+  name                    = "${var.project}/${var.environment}/openai-api-key"
+  description             = "OpenAI API key for GenAI service (${var.environment})"
+  kms_key_id              = null
+  recovery_window_in_days = 0
 
   tags = merge(local.default_tags, var.tags)
 }
