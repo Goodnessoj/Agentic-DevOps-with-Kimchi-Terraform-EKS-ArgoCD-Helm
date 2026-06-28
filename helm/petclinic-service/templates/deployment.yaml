@@ -33,7 +33,7 @@ spec:
           {{- if .Values.image.repository }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           {{- else }}
-          image: "{{ .Values.global.ecrRegistry }}/petclinic-{{ .Values.global.environment }}/{{ .Release.Name }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.global.ecrRegistry }}/petclinic-{{ .Values.global.environment }}/{{ include "petclinic-service.baseName" . }}:{{ .Values.image.tag }}"
           {{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:

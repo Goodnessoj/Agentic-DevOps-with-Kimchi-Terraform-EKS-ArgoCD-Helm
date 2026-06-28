@@ -6,6 +6,18 @@ Expand the name of the chart.
 {{- end }}
 
 {{/*
+Derive the base service name by trimming the environment suffix from the release name.
+*/}}
+{{- define "petclinic-service.baseName" -}}
+{{- $env := .Values.global.environment | default "" -}}
+{{- if and $env (hasSuffix (printf "-%s" $env) .Release.Name) -}}
+{{- .Release.Name | trimSuffix (printf "-%s" $env) -}}
+{{- else -}}
+{{- .Release.Name -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
