@@ -1,3 +1,30 @@
 image:
-  repository: "271369142928.dkr.ecr.us-east-2.amazonaws.com/petclinic-dev/config-server"
   tag: "v1.0.0"
+
+service:
+  port: 8888
+  targetPort: 8888
+
+env:
+  SPRING_PROFILES_ACTIVE: "docker"
+  GIT_REPO: "https://github.com/spring-petclinic/spring-petclinic-microservices-config"
+
+probes:
+  startup:
+    path: /actuator/health
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+  readiness:
+    path: /actuator/health
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  liveness:
+    path: /actuator/health
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3

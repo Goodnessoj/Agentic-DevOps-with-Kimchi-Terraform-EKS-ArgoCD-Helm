@@ -1,1 +1,14 @@
-replicas: 1
+replicaCount: 1
+
+global:
+  ecrRegistry: "271369142928.dkr.ecr.us-east-2.amazonaws.com"
+  environment: "dev"
+
+env:
+  SPRING_DATASOURCE_URL: "jdbc:mysql://petclinic-dev-mysql.cx0wc6acwy6x.us-east-2.rds.amazonaws.com:3306/petclinic"
+
+autoscaling:
+  enabled: false
+
+podDisruptionBudget:
+  enabled: false
