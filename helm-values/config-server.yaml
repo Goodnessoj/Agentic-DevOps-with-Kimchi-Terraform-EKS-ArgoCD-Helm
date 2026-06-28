@@ -1,14 +1,11 @@
 image:
-  tag: "v1.0.0"
-
+  tag: "fd96924"
 service:
   port: 8888
   targetPort: 8888
-
 env:
   SPRING_PROFILES_ACTIVE: "docker"
   GIT_REPO: "https://github.com/spring-petclinic/spring-petclinic-microservices-config"
-
 probes:
   startup:
     path: /actuator/health
