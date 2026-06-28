@@ -63,7 +63,7 @@ variable "node_max_size" {
 variable "node_desired_size" {
   description = "Desired number of nodes in the EKS managed node group"
   type        = number
-  default     = 2
+  default     = 3
 }
 
 variable "node_disk_size" {

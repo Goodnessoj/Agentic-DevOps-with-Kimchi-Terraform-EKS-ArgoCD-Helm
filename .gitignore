@@ -54,6 +54,9 @@ venv/
 node_modules/
 package-lock.json
 
+# Kimchi / Claude Code
+.kimchi/
+
 # Temporary
 *.tmp
 *.bak
